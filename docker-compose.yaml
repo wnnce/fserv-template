@@ -1,0 +1,10 @@
+services:
+  fserv-template:
+    image: fserv-template:latest
+    container_name: fserv-template
+    restart: always
+    ports:
+      - "7000:7000"
+    volumes:
+      - ${PWD}/logs:/app/logs
+      - ${PWD}/configs:/app/configs
