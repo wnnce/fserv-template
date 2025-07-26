@@ -5,7 +5,7 @@ import (
 
 	"github.com/fasthttp/websocket"
 	"github.com/gofiber/fiber/v3"
-	"github.com/wnnce/fserv-template/biz/route"
+	"github.com/wnnce/fserv-template/biz/handler"
 	"github.com/wnnce/fserv-template/biz/route/ws"
 )
 
@@ -18,7 +18,7 @@ type User struct {
 
 // custom router register
 func customRouter(app *fiber.App) {
-	app.Get("/ping", ping)
+	app.Get("/health", health)
 	app.Get("/ws/echo", func(ctx fiber.Ctx) error {
 		return upgrade.Upgrade(ctx.RequestCtx(), func(conn *websocket.Conn) {
 			session := ws.NewWebsocketSession(context.Background(), conn)
@@ -33,10 +33,10 @@ func customRouter(app *fiber.App) {
 		if err := ctx.Bind().Body(user); err != nil {
 			return err
 		}
-		return ctx.JSON(route.OkWithData(user))
+		return ctx.JSON(handler.OkWithData(user))
 	})
 }
 
-func ping(ctx fiber.Ctx) error {
-	return ctx.JSON(route.Ok())
+func health(ctx fiber.Ctx) error {
+	return ctx.JSON(handler.Ok())
 }

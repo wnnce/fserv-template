@@ -1,9 +1,13 @@
-package route
+// base.go
+// Author:      cola
+// Description: TODO: Describe this file
+// Created:     2025/7/26 16:16
+
+package handler
 
 import (
-	"time"
-
 	"github.com/gofiber/fiber/v3"
+	"time"
 )
 
 // Result is a generic response wrapper used for standardizing API responses.

@@ -1,17 +1,17 @@
+// handler.go
+//
+// Author:      cola
+// Description: TODO: Describe this file
+// Created:     2025/7/13 15:10
+
 package ws
 
 import (
 	"log/slog"
 
 	"github.com/gofiber/utils/v2"
-	"github.com/wnnce/fserv-template/biz/route"
+	"github.com/wnnce/fserv-template/biz/handler"
 )
-
-// handler.go
-//
-// Author:      cola
-// Description: TODO: Describe this file
-// Created:     2025/7/13 15:10
 
 // WebsocketHandler defines callbacks for session events and messages.
 type WebsocketHandler interface {
@@ -51,7 +51,7 @@ func (self *EchoWebsocketHandler) TextMessageHandler(message []byte) {
 		self.ctx.Shutdown()
 		return
 	}
-	_ = self.ctx.WriteTextMessageWithJSON(route.OkWithData[string](data))
+	_ = self.ctx.WriteTextMessageWithJSON(handler.OkWithData[string](data))
 }
 
 func (self *EchoWebsocketHandler) BinaryMessageHandler(message []byte) {

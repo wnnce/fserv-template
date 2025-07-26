@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/gofiber/fiber/v3"
-	"github.com/wnnce/fserv-template/biz/route"
+	"github.com/wnnce/fserv-template/biz/handler"
 )
 
 var (
@@ -31,9 +31,9 @@ type ErrorHandler func(ctx fiber.Ctx, err error) (error, bool)
 func RegisterErrorHandler(handlers ...ErrorHandler) {
 	mutex.Lock()
 	defer mutex.Unlock()
-	for _, handler := range handlers {
+	for _, handle := range handlers {
 		node := &handlerNode{
-			handler: handler,
+			handler: handle,
 			next:    head,
 		}
 		head = node
@@ -64,7 +64,7 @@ func defaultErrorHandler(ctx fiber.Ctx, err error) error {
 	slog.ErrorContext(ctx.Context(), err.Error())
 	var fiberError *fiber.Error
 	if errors.As(err, &fiberError) {
-		return ctx.JSON(route.Fail(fiberError.Code, fiberError.Message))
+		return ctx.JSON(handler.Fail(fiberError.Code, fiberError.Message))
 	}
-	return ctx.JSON(route.FailWithServer(err.Error()))
+	return ctx.JSON(handler.FailWithServer(err.Error()))
 }
