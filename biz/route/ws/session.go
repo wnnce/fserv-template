@@ -59,19 +59,14 @@ type WebsocketSession struct {
 
 // NewWebsocketSession creates a new WebsocketSession with its own
 // cancellable context derived from the provided parent context.
-func NewWebsocketSession(ctx context.Context, conn *websocket.Conn) *WebsocketSession {
+func NewWebsocketSession(ctx context.Context, conn *websocket.Conn, handler WebsocketHandler) *WebsocketSession {
 	child, cancel := context.WithCancel(ctx)
 	return &WebsocketSession{
-		conn:   conn,
-		ctx:    child,
-		cancel: cancel,
+		conn:    conn,
+		ctx:     child,
+		cancel:  cancel,
+		handler: handler,
 	}
-}
-
-// SetHandler assigns the WebsocketHandler that will receive events
-// from this session.
-func (self *WebsocketSession) SetHandler(handler WebsocketHandler) {
-	self.handler = handler
 }
 
 // Shutdown closes the session exactly once, sending a close frame,
@@ -87,7 +82,7 @@ func (self *WebsocketSession) Shutdown() {
 
 		self.cancel()
 		if self.handler != nil {
-			self.handler.OnClose()
+			self.handler.OnClose(self)
 		}
 	})
 }
@@ -106,7 +101,7 @@ func (self *WebsocketSession) ReadLoop() {
 	}()
 	self.conn.SetPongHandler(func(appData string) error {
 		if self.handler != nil {
-			return self.handler.PongHandler(appData)
+			return self.handler.OnPong(self, appData)
 		}
 		return nil
 	})
@@ -116,16 +111,16 @@ func (self *WebsocketSession) ReadLoop() {
 			return
 		}
 		messageType, message, err := self.conn.ReadMessage()
-		if err != nil && self.handler.OnError(err) {
+		if err != nil && self.handler.OnError(self, err) {
 			return
 		}
 		switch messageType {
 		case websocket.TextMessage:
-			self.handler.TextMessageHandler(message)
+			self.handler.OnTextMessage(self, message)
 		case websocket.BinaryMessage:
-			self.handler.BinaryMessageHandler(message)
+			self.handler.OnBinaryMessage(self, message)
 		default:
-			self.handler.MessageHandler(messageType, message, err)
+			self.handler.OnMessage(self, messageType, message, err)
 		}
 	}
 }

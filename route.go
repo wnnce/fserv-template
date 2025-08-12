@@ -5,11 +5,16 @@ import (
 
 	"github.com/fasthttp/websocket"
 	"github.com/gofiber/fiber/v3"
+	"github.com/valyala/fasthttp"
 	"github.com/wnnce/fserv-template/biz/handler"
 	"github.com/wnnce/fserv-template/biz/route/ws"
 )
 
-var upgrade websocket.FastHTTPUpgrader
+var upgrade = websocket.FastHTTPUpgrader{
+	CheckOrigin: func(ctx *fasthttp.RequestCtx) bool {
+		return true
+	},
+}
 
 type User struct {
 	Name string `json:"name,omitempty" validate:"required,min=3"`
@@ -21,9 +26,7 @@ func customRouter(app *fiber.App) {
 	app.Get("/health", health)
 	app.Get("/ws/echo", func(ctx fiber.Ctx) error {
 		return upgrade.Upgrade(ctx.RequestCtx(), func(conn *websocket.Conn) {
-			session := ws.NewWebsocketSession(context.Background(), conn)
-			echoHandler := ws.NewEchoWebsocketHandler(session)
-			session.SetHandler(echoHandler)
+			session := ws.NewWebsocketSession(context.Background(), conn, ws.NewEchoWebsocketHandler())
 			// Sync
 			session.ReadLoop()
 		})

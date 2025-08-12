@@ -38,7 +38,6 @@ linters:
     - lll
     - misspell
     - nakedret
-    - noctx
     - nolintlint
     - revive
     - staticcheck
@@ -52,6 +51,7 @@ linters:
     - gocritic
     - gochecknoinits
     - intrange
+    - noctx
   settings:
     staticcheck:
       checks:

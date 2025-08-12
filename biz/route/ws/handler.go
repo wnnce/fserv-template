@@ -15,66 +15,68 @@ import (
 
 // WebsocketHandler defines callbacks for session events and messages.
 type WebsocketHandler interface {
-	// TextMessageHandler is called for text messages.
-	TextMessageHandler(message []byte)
+	// OnTextMessage is called for text messages.
+	OnTextMessage(ctx SessionContext, message []byte)
 
-	// BinaryMessageHandler is called for binary messages.
-	BinaryMessageHandler(message []byte)
+	// OnBinaryMessage is called for binary messages.
+	OnBinaryMessage(ctx SessionContext, message []byte)
 
-	// MessageHandler handles other message types or errors.
-	MessageHandler(messageType int, message []byte, err error)
+	// OnMessage handles other message types or errors.
+	OnMessage(ctx SessionContext, messageType int, message []byte, err error)
 
-	// PongHandler handles pong (heartbeat) responses.
-	PongHandler(data string) error
+	// OnPong handles pong (heartbeat) responses.
+	OnPong(ctx SessionContext, data string) error
 
 	// OnError is invoked on read errors. Return true to exit.
-	OnError(err error) bool
+	OnError(ctx SessionContext, err error) bool
 
 	// OnClose is called once when the session is closed.
-	OnClose()
+	OnClose(ctx SessionContext)
 }
+
+type BuiltinWebsocketHandler struct {
+}
+
+func (_ *BuiltinWebsocketHandler) OnTextMessage(_ SessionContext, _ []byte) {}
+
+func (_ *BuiltinWebsocketHandler) OnBinaryMessage(_ SessionContext, _ []byte) {}
+
+func (_ *BuiltinWebsocketHandler) OnMessage(_ SessionContext, _ int, _ []byte, _ error) {
+}
+
+func (_ *BuiltinWebsocketHandler) OnPong(_ SessionContext, _ string) error {
+	return nil
+}
+
+func (_ *BuiltinWebsocketHandler) OnError(_ SessionContext, _ error) bool {
+	return false
+}
+
+func (_ *BuiltinWebsocketHandler) OnClose(_ SessionContext) {}
 
 type EchoWebsocketHandler struct {
-	ctx SessionContext
+	BuiltinWebsocketHandler
 }
 
-func NewEchoWebsocketHandler(ctx SessionContext) WebsocketHandler {
-	return &EchoWebsocketHandler{
-		ctx: ctx,
-	}
+func NewEchoWebsocketHandler() WebsocketHandler {
+	return &EchoWebsocketHandler{}
 }
 
-func (self *EchoWebsocketHandler) TextMessageHandler(message []byte) {
+func (self *EchoWebsocketHandler) OnTextMessage(ctx SessionContext, message []byte) {
 	data := utils.UnsafeString(message)
 	slog.Info("echo websocket reader text message", slog.String("message", data))
 	if data == "END" {
-		self.ctx.Shutdown()
+		ctx.Shutdown()
 		return
 	}
-	_ = self.ctx.WriteTextMessageWithJSON(handler.OkWithData[string](data))
+	_ = ctx.WriteTextMessageWithJSON(handler.OkWithData[string](data))
 }
 
-func (self *EchoWebsocketHandler) BinaryMessageHandler(message []byte) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (self *EchoWebsocketHandler) MessageHandler(messageType int, message []byte, err error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (self *EchoWebsocketHandler) PongHandler(data string) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (self *EchoWebsocketHandler) OnError(err error) bool {
+func (self *EchoWebsocketHandler) OnError(ctx SessionContext, err error) bool {
 	//TODO implement me
 	return true
 }
 
-func (self *EchoWebsocketHandler) OnClose() {
-	//TODO implement me
+func (self *EchoWebsocketHandler) OnClose(ctx SessionContext) {
 	slog.Info("EchoWebsocketHandler onClose")
 }
