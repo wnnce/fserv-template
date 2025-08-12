@@ -1,6 +1,6 @@
 # fserv-template
 
-A modern, production-ready Go microservice template based on [Fiber v3](https://github.com/gofiber/fiber), supporting RESTful APIs, WebSocket, PostgreSQL, MongoDB, Redis, Kafka, and more.
+A modern, production-ready Go microservice template based on [Fiber V2](https://github.com/gofiber/fiber), supporting RESTful APIs, WebSocket, PostgreSQL, MongoDB, Redis, Kafka, and more.
 
 This template is designed for rapid development of scalable backend services with robust configuration, logging, validation, and CI/CD support.
 
@@ -21,7 +21,7 @@ This template is designed for rapid development of scalable backend services wit
 ---
 
 ## Features
-- ⚡️ Fast HTTP server powered by [Fiber v3](https://github.com/gofiber/fiber)
+- ⚡️ Fast HTTP server powered by [Fiber v2](https://github.com/gofiber/fiber)
 - 🧩 Modular structure for business logic, middleware, and configuration
 - 🗄️ Built-in support for PostgreSQL, MongoDB, Redis, and Kafka
 - 🔒 Centralized error handling and request validation (with Chinese translation)

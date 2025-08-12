@@ -9,9 +9,9 @@ import (
 	"syscall"
 
 	"github.com/bytedance/sonic"
-	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/fiber/v3/middleware/pprof"
-	recoverer "github.com/gofiber/fiber/v3/middleware/recover"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/pprof"
+	recoverer "github.com/gofiber/fiber/v2/middleware/recover"
 	_ "github.com/wnnce/fserv-template/biz/dal"
 	_ "github.com/wnnce/fserv-template/biz/mw"
 	"github.com/wnnce/fserv-template/biz/route"
@@ -19,16 +19,14 @@ import (
 	"github.com/wnnce/fserv-template/internal/constat"
 	"github.com/wnnce/fserv-template/internal/middleware"
 	"github.com/wnnce/fserv-template/logging"
-	"github.com/wnnce/fserv-template/pkg/tool"
 )
 
 func initialize() *fiber.App {
 	app := fiber.New(fiber.Config{
-		AppName:         config.ViperGet[string]("server.name", "fserv-template"),
-		JSONEncoder:     sonic.Marshal,
-		JSONDecoder:     sonic.Unmarshal,
-		ErrorHandler:    ChainErrorHandler,
-		StructValidator: tool.Validator(),
+		AppName:      config.ViperGet[string]("server.name", "fserv-template"),
+		JSONEncoder:  sonic.Marshal,
+		JSONDecoder:  sonic.Unmarshal,
+		ErrorHandler: ChainErrorHandler,
 	})
 	app.Use(recoverer.New(recoverer.Config{
 		EnableStackTrace:  true,
@@ -81,7 +79,7 @@ func main() {
 	select {
 	case <-exit:
 		slog.Info("listen system exit signal, shutdown application!")
-		if err := app.Shutdown(); err != nil {
+		if err = app.Shutdown(); err != nil {
 			slog.Info("shutdown app error", slog.String("error", err.Error()))
 		}
 	case <-ctx.Done():

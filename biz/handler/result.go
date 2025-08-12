@@ -6,8 +6,9 @@
 package handler
 
 import (
-	"github.com/gofiber/fiber/v3"
 	"time"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 // Result is a generic response wrapper used for standardizing API responses.

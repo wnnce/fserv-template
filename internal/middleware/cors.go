@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v2"
 )
 
 // CorsConfig defines the configuration for the CORS (Cross-Origin Resource Sharing) middleware.
@@ -53,7 +53,7 @@ func corsConfigDefault(cfg *CorsConfig) {
 // the middleware responds immediately with a 204 status and proper headers.
 func CorsMiddleware(config CorsConfig) fiber.Handler {
 	corsConfigDefault(&config)
-	return func(ctx fiber.Ctx) error {
+	return func(ctx *fiber.Ctx) error {
 		if config.UseOrigin {
 			ctx.Set(fiber.HeaderAccessControlAllowOrigin, ctx.Get(fiber.HeaderOrigin, ""))
 		} else {
