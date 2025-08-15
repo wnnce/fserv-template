@@ -8,7 +8,9 @@ package ws
 
 import (
 	"log/slog"
+	"time"
 
+	"github.com/fasthttp/websocket"
 	"github.com/gofiber/utils/v2"
 	"github.com/wnnce/fserv-template/biz/handler"
 )
@@ -24,14 +26,14 @@ type WebsocketHandler interface {
 	// OnMessage handles other message types or errors.
 	OnMessage(ctx SessionContext, messageType int, message []byte, err error)
 
+	// OnPing handles ping (heartbeat) responses.
+	OnPing(ctx SessionContext, data string) error
+
 	// OnPong handles pong (heartbeat) responses.
 	OnPong(ctx SessionContext, data string) error
 
-	// OnError is invoked on read errors. Return true to exit.
-	OnError(ctx SessionContext, err error) bool
-
 	// OnClose is called once when the session is closed.
-	OnClose(ctx SessionContext)
+	OnClose(ctx SessionContext, err error)
 }
 
 type BuiltinWebsocketHandler struct {
@@ -44,15 +46,15 @@ func (_ *BuiltinWebsocketHandler) OnBinaryMessage(_ SessionContext, _ []byte) {}
 func (_ *BuiltinWebsocketHandler) OnMessage(_ SessionContext, _ int, _ []byte, _ error) {
 }
 
+func (_ *BuiltinWebsocketHandler) OnPing(ctx SessionContext, data string) error {
+	return ctx.Websocket().WriteControl(websocket.PongMessage, []byte(data), time.Now().Add(time.Second))
+}
+
 func (_ *BuiltinWebsocketHandler) OnPong(_ SessionContext, _ string) error {
 	return nil
 }
 
-func (_ *BuiltinWebsocketHandler) OnError(_ SessionContext, _ error) bool {
-	return false
-}
-
-func (_ *BuiltinWebsocketHandler) OnClose(_ SessionContext) {}
+func (_ *BuiltinWebsocketHandler) OnClose(_ SessionContext, _ error) {}
 
 type EchoWebsocketHandler struct {
 	BuiltinWebsocketHandler
@@ -70,13 +72,4 @@ func (self *EchoWebsocketHandler) OnTextMessage(ctx SessionContext, message []by
 		return
 	}
 	_ = ctx.WriteTextMessageWithJSON(handler.OkWithData[string](data))
-}
-
-func (self *EchoWebsocketHandler) OnError(ctx SessionContext, err error) bool {
-	//TODO implement me
-	return true
-}
-
-func (self *EchoWebsocketHandler) OnClose(ctx SessionContext) {
-	slog.Info("EchoWebsocketHandler onClose")
 }

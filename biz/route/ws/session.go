@@ -55,6 +55,7 @@ type WebsocketSession struct {
 	once    sync.Once          // ensures Shutdown runs only once
 	handler WebsocketHandler   // message/event handler
 	mutex   sync.Mutex         // protects concurrent writes
+	err     error
 }
 
 // NewWebsocketSession creates a new WebsocketSession with its own
@@ -81,9 +82,10 @@ func (self *WebsocketSession) Shutdown() {
 		self.mutex.Unlock()
 
 		self.cancel()
-		if self.handler != nil {
-			self.handler.OnClose(self)
+		if self.err == nil {
+			self.err = self.ctx.Err()
 		}
+		self.handler.OnClose(self, self.err)
 	})
 }
 
@@ -105,13 +107,20 @@ func (self *WebsocketSession) ReadLoop() {
 		}
 		return nil
 	})
+	self.conn.SetPingHandler(func(appData string) error {
+		if self.handler != nil {
+			return self.handler.OnPing(self, appData)
+		}
+		return nil
+	})
 	self.watchCancel()
 	for {
 		if err := self.ctx.Err(); err != nil {
 			return
 		}
 		messageType, message, err := self.conn.ReadMessage()
-		if err != nil && self.handler.OnError(self, err) {
+		if err != nil {
+			self.err = err
 			return
 		}
 		switch messageType {
@@ -148,6 +157,14 @@ func (self *WebsocketSession) Write(messageType int, message []byte) error {
 	self.mutex.Lock()
 	defer self.mutex.Unlock()
 	return self.conn.WriteMessage(messageType, message)
+}
+
+func (self *WebsocketSession) WriteAsync(messageType int, message []byte, callback func(err error)) {
+	go func() {
+		if err := self.Write(messageType, message); callback != nil {
+			callback(err)
+		}
+	}()
 }
 
 // WriteTextMessage sends a text message in a thread-safe manner.
