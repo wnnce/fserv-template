@@ -12,15 +12,17 @@ import (
 
 // Service manages the Kafka client, consumers, and context for message processing.
 type Service struct {
-	runner     atomic.Bool
-	name       string
-	client     *kgo.Client
-	autoCommit bool
-	mutex      *sync.Mutex
-	consumers  map[string]*Consumer
-	ctx        context.Context
-	cancel     context.CancelFunc
-	once       sync.Once
+	running     atomic.Bool
+	name        string
+	client      *kgo.Client
+	autoCommit  bool
+	mutex       *sync.Mutex
+	consumers   map[string]*Consumer
+	workerMap   map[string]*workerCtx
+	workerMutex *sync.Mutex
+	ctx         context.Context
+	cancel      context.CancelFunc
+	once        sync.Once
 }
 
 // NewService creates a new Service instance with the given name, Kafka client, and auto-commit setting.
@@ -75,12 +77,14 @@ func InitKafkaService(ctx context.Context) (func(), error) {
 	}
 	childCtx, cancel := context.WithCancel(ctx)
 	defaultService = &Service{
-		client:     client,
-		autoCommit: autoCommit,
-		mutex:      &sync.Mutex{},
-		consumers:  make(map[string]*Consumer),
-		ctx:        childCtx,
-		cancel:     cancel,
+		client:      client,
+		autoCommit:  autoCommit,
+		mutex:       &sync.Mutex{},
+		consumers:   make(map[string]*Consumer),
+		workerMap:   make(map[string]*workerCtx),
+		workerMutex: &sync.Mutex{},
+		ctx:         childCtx,
+		cancel:      cancel,
 	}
 	return func() {
 		defaultService.Shutdown()

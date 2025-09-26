@@ -29,10 +29,7 @@ type MessageHandler func(ctx context.Context, client *kgo.Client, autoCommit boo
 
 // RegisterConsumers registers one or more consumers to the Service and adds their topics to the client.
 func (self *Service) RegisterConsumers(consumers ...Consumer) {
-	if self.ctx.Err() != nil {
-		return
-	}
-	if consumers == nil || len(consumers) == 0 {
+	if self.ctx.Err() != nil || len(consumers) == 0 {
 		return
 	}
 	self.mutex.Lock()
@@ -67,4 +64,13 @@ func (self *Service) RemoveConsumers(topics ...string) {
 		}
 	}
 	self.mutex.Unlock()
+
+	self.workerMutex.Lock()
+	for _, topic := range topics {
+		if worker, ok := self.workerMap[topic]; ok {
+			worker.cancel()
+			delete(self.workerMap, topic)
+		}
+	}
+	self.workerMutex.Unlock()
 }
